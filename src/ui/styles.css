@@ -107,6 +107,18 @@ summary { cursor: pointer; font-weight: 600; min-height: 32px; }
 .rate-again { background: var(--again); }
 .rate-hard { background: var(--hard); }
 .rate-easy { background: var(--easy); }
+.field { display: flex; flex-direction: column; gap: 6px; font-weight: 600; }
+.field input {
+  width: 100%;
+  font: inherit;
+  font-weight: 400;
+  min-height: 48px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+}
 .file { display: block; }
 .file input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .file span { display: block; text-align: center; line-height: 28px; }

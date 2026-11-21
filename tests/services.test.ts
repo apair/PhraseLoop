@@ -10,7 +10,16 @@ import {
   validateBackup,
 } from '../src/services/backup';
 import { getOrCreateSession, rateCard } from '../src/services/session';
-import { applySnapshot, resolveFeedUrl, SAMPLE_FEED_PATH, syncCorrections } from '../src/services/sync';
+import { getSheetUrl, setSheetUrl } from '../src/data/settings';
+import {
+  applySnapshot,
+  resolveActiveFeed,
+  resolveFeedUrl,
+  SAMPLE_FEED_PATH,
+  SheetUrlError,
+  syncCorrections,
+  validateSheetUrl,
+} from '../src/services/sync';
 import { freshDb, makeCorrections } from './helpers';
 
 const HEADER = 'Date,Original,Alternatives,Corrected,Explanation';
@@ -58,6 +67,36 @@ describe('feed url', () => {
   it('uses a configured sheet URL as-is', () => {
     const url = 'https://docs.google.com/spreadsheets/d/abc/export?format=csv&gid=0';
     expect(resolveFeedUrl(`  ${url}  `)).toEqual({ url, sample: false });
+  });
+
+  it('saves a sheet url on this device and syncs that feed', async () => {
+    const db = freshDb();
+    expect(await resolveActiveFeed(db)).toEqual({ url: SAMPLE_FEED_PATH, sample: true });
+    expect(validateSheetUrl('  ')).toBe('');
+    expect(validateSheetUrl('https://example.com/published-sheet.csv')).toBe('');
+    expect(() => validateSheetUrl('not a url')).toThrow(SheetUrlError);
+    expect(() => validateSheetUrl('http://sheets.example/file.csv')).toThrow(/https/);
+    expect(() => validateSheetUrl('javascript:alert(1)')).toThrow(SheetUrlError);
+    expect(() => validateSheetUrl('https://user:secret@docs.google.com/spreadsheets/d/abc/edit')).toThrow(/password/);
+    expect(validateSheetUrl('http://127.0.0.1:8787/sheet.csv')).toBe('http://127.0.0.1:8787/sheet.csv');
+
+    const saved = validateSheetUrl('https://docs.google.com/spreadsheets/d/abc_123-XY/edit#gid=123');
+    expect(saved).toBe('https://docs.google.com/spreadsheets/d/abc_123-XY/export?format=csv&gid=123');
+    await setSheetUrl(db, saved);
+    expect(await getSheetUrl(db)).toBe(saved);
+    expect(await resolveActiveFeed(db)).toEqual({ url: saved, sample: false });
+
+    let requested = '';
+    const fetchImpl = (async (input: RequestInfo | URL) => {
+      requested = String(input);
+      return new Response(csv([['', 'o', 'a', 'From the sheet.', 'e']]));
+    }) as unknown as typeof fetch;
+    await syncCorrections(db, fetchImpl);
+    expect(requested).toBe(saved);
+
+    await setSheetUrl(db, '');
+    expect(await getSheetUrl(db)).toBeUndefined();
+    expect(await resolveActiveFeed(db)).toEqual({ url: SAMPLE_FEED_PATH, sample: true });
   });
 });
 

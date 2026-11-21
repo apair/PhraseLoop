@@ -1,11 +1,10 @@
-import { usingSampleFeed } from '../services/sync';
 import type { SyncController } from './hooks';
 
 export function SyncLine({ sync }: { sync: SyncController }) {
   const { status } = sync;
   return (
     <div className="muted" aria-live="polite">
-      {usingSampleFeed() && (
+      {sync.sample && (
         <p className="notice">
           Sample cards. These are practice corrections, not your Google Sheet.
         </p>
