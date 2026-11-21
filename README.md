@@ -27,19 +27,20 @@ The feed URL comes **only** from the build-time variable `VITE_GOOGLE_SHEET_URL`
 `import.meta.env`). There is deliberately no in-app URL setting; changing it means rebuilding and
 redeploying. When it is missing, the app shows a clear configuration error and keeps working from cached data.
 
-Spreadsheet `1VXM1taky7CuwwcHJxHaZ8pQOOXUEhFV0vLFkFaiQNXo`, worksheet `Sheet1`, columns A-E
-(date, original, native alternatives, corrected sentence, explanation), headers in row 1.
+Worksheet `Sheet1` (gid `0`), columns A-E (date, original, native alternatives, corrected sentence,
+explanation), headers in row 1. Two feed styles work:
 
-> **Status: not yet verified against the real sheet.** At the time of writing,
-> `https://docs.google.com/spreadsheets/d/<id>/export?format=csv` returns HTTP 401, i.e. the sheet is not
-> publicly readable yet. To enable it:
-> 1. In Google Sheets: *File > Share > Publish to web*, choose **Sheet1** only and format **CSV**, then publish.
-> 2. Put the generated `.../pub?gid=...&single=true&output=csv` URL in `VITE_GOOGLE_SHEET_URL` and rebuild.
-> 3. Open the app online once and confirm the sync shows your card count (this also confirms the feed is
->    CORS-readable from the browser). If it is not, use a read-only Apps Script web app returning CSV instead.
->
-> Public read means anyone who has or discovers the published URL can view the corrections. Publishing gives
-> **no edit access**. The app contains no credentials or API keys; never add any.
+- Link-shared sheet ("Anyone with the link: Viewer"): `https://docs.google.com/spreadsheets/d/<SPREADSHEET_ID>/export?format=csv&gid=0`
+- Published sheet (File > Share > Publish to web, **Sheet1 only**, CSV): the generated `.../pub?gid=0&single=true&output=csv` URL.
+
+Both were verified from a real browser (Chrome) with CORS: the app synced all rows and started a review.
+The real URL is intentionally not committed (this repository is public); set it in your local `.env.local`
+and in your host's build environment.
+
+> Public read means anyone who has or discovers the URL can view the corrections. Link sharing exposes the
+> **whole spreadsheet** (every tab), while "Publish to web" exposes only the published tab, so prefer publishing
+> Sheet1 only if the file contains anything else. Neither grants edit access. The app contains no credentials
+> or API keys; never add any.
 
 ## Architecture
 
