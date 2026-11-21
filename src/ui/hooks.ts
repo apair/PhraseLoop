@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { db } from '../data/db';
 import { getSyncStatus } from '../data/settings';
-import { syncCorrections, ConfigError, getFeedUrl, type SyncSummary } from '../services/sync';
+import { syncCorrections, type SyncSummary } from '../services/sync';
 import type { SyncStatus } from '../types';
 
 export function useOnline(): boolean {
@@ -17,15 +17,6 @@ export function useOnline(): boolean {
     };
   }, []);
   return online;
-}
-
-export function configError(): string | undefined {
-  try {
-    getFeedUrl();
-    return undefined;
-  } catch (err) {
-    return err instanceof ConfigError ? err.message : String(err);
-  }
 }
 
 export interface SyncController {
@@ -61,7 +52,7 @@ export function useSync(online: boolean): SyncController {
   }, []);
 
   useEffect(() => {
-    if (online && !configError()) void syncNow();
+    if (online) void syncNow();
   }, [online, syncNow]);
 
   return { status, syncing, lastSummary, version, syncNow };

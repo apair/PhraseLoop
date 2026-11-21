@@ -25,7 +25,9 @@ echo 'VITE_GOOGLE_SHEET_URL=http://localhost:8787/sheet.csv' > .env.local
 
 The feed URL comes **only** from the build-time variable `VITE_GOOGLE_SHEET_URL` (read through
 `import.meta.env`). There is deliberately no in-app URL setting; changing it means rebuilding and
-redeploying. When it is missing, the app shows a clear configuration error and keeps working from cached data.
+redeploying. When it is missing, or still the placeholder in `.env.example`, the app syncs the bundled
+sample sheet (`public/sample-sheet.csv`) and labels those cards as sample data. A real sheet URL replaces
+the sample. A failed sync of either feed never erases cards already stored on the device.
 
 Worksheet `Sheet1` (gid `0`), columns A-E (date, original, native alternatives, corrected sentence,
 explanation), headers in row 1. Two feed styles work:

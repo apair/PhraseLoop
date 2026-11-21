@@ -10,7 +10,6 @@ import {
   type ImportPreview,
 } from '../services/backup';
 import type { SyncController } from './hooks';
-import { configError } from './hooks';
 import { SyncLine } from './SyncLine';
 
 interface Props {
@@ -81,7 +80,7 @@ export function Settings({ sync, online, onBack }: Props) {
             {sync.lastSummary.duplicates} duplicates ignored.
           </p>
         )}
-        <button disabled={!online || sync.syncing || !!configError()} onClick={() => void sync.syncNow()}>
+        <button disabled={!online || sync.syncing} onClick={() => void sync.syncNow()}>
           {sync.syncing ? 'Syncing...' : 'Sync now'}
         </button>
         {!online && <p className="muted">You are offline. Saved cards remain usable.</p>}

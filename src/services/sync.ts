@@ -2,16 +2,27 @@ import type { Db } from '../data/db';
 import { updateSyncStatus } from '../data/settings';
 import { parseSheetCsv, type ParseResult } from '../lib/csv';
 
-export class ConfigError extends Error {}
+/** Same-origin CSV shipped in public/. Used when no real sheet URL is configured. */
+export const SAMPLE_FEED_PATH = '/sample-sheet.csv';
+
+const PLACEHOLDER_FEED = 'https://example.com/published-sheet.csv';
+
+/**
+ * A configured sheet URL wins. An empty value or the example placeholder
+ * falls back to the bundled sample sheet so the app still runs.
+ */
+export function resolveFeedUrl(configured: string | undefined): { url: string; sample: boolean } {
+  const url = configured?.trim() ?? '';
+  if (!url || url === PLACEHOLDER_FEED) return { url: SAMPLE_FEED_PATH, sample: true };
+  return { url, sample: false };
+}
 
 export function getFeedUrl(): string {
-  const url = (import.meta.env.VITE_GOOGLE_SHEET_URL as string | undefined)?.trim();
-  if (!url || url === 'https://example.com/published-sheet.csv') {
-    throw new ConfigError(
-      'No sheet feed is configured. Set VITE_GOOGLE_SHEET_URL (see .env.example) and rebuild the app.',
-    );
-  }
-  return url;
+  return resolveFeedUrl(import.meta.env.VITE_GOOGLE_SHEET_URL as string | undefined).url;
+}
+
+export function usingSampleFeed(): boolean {
+  return resolveFeedUrl(import.meta.env.VITE_GOOGLE_SHEET_URL as string | undefined).sample;
 }
 
 export interface SyncSummary {

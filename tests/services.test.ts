@@ -10,7 +10,7 @@ import {
   validateBackup,
 } from '../src/services/backup';
 import { getOrCreateSession, rateCard } from '../src/services/session';
-import { applySnapshot, syncCorrections } from '../src/services/sync';
+import { applySnapshot, resolveFeedUrl, SAMPLE_FEED_PATH, syncCorrections } from '../src/services/sync';
 import { freshDb, makeCorrections } from './helpers';
 
 const HEADER = 'Date,Original,Alternatives,Corrected,Explanation';
@@ -45,6 +45,19 @@ describe('csv ingestion', () => {
     expect(normalizeForId('  Caf\u0065\u0301  Au  Lait ')).toBe('caf\u00e9 au lait');
     expect(await correctionId('Hello  World')).toBe(await correctionId(' hello world '));
     expect(await correctionId('Hello World.')).not.toBe(await correctionId('Hello World'));
+  });
+});
+
+describe('feed url', () => {
+  it('uses the bundled sample sheet when the URL is missing or still the placeholder', () => {
+    expect(resolveFeedUrl(undefined)).toEqual({ url: SAMPLE_FEED_PATH, sample: true });
+    expect(resolveFeedUrl('  ')).toEqual({ url: SAMPLE_FEED_PATH, sample: true });
+    expect(resolveFeedUrl('https://example.com/published-sheet.csv')).toEqual({ url: SAMPLE_FEED_PATH, sample: true });
+  });
+
+  it('uses a configured sheet URL as-is', () => {
+    const url = 'https://docs.google.com/spreadsheets/d/abc/export?format=csv&gid=0';
+    expect(resolveFeedUrl(`  ${url}  `)).toEqual({ url, sample: false });
   });
 });
 
