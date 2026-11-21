@@ -35,6 +35,11 @@ export async function peekSession(db: Db, now: Date = new Date()): Promise<Daily
   return db.sessions.get(toLocalDate(now));
 }
 
+/** Drop today's frozen list so the next start rebuilds it. Used when the sheet URL changes. */
+export async function forgetTodaySession(db: Db, now: Date = new Date()): Promise<void> {
+  await db.sessions.delete(toLocalDate(now));
+}
+
 /** Persist a rating: state, event and session progress in one transaction. */
 export async function rateCard(
   db: Db,

@@ -9,7 +9,7 @@ import {
   replaceAllData,
   validateBackup,
 } from '../src/services/backup';
-import { getOrCreateSession, rateCard } from '../src/services/session';
+import { forgetTodaySession, getOrCreateSession, rateCard } from '../src/services/session';
 import { getSheetUrl, setSheetUrl } from '../src/data/settings';
 import {
   applySnapshot,
@@ -168,6 +168,20 @@ describe('session persistence', () => {
     expect(day2.date).toBe(toLocalDate(new Date(2026, 10, 21)));
     expect(day2.completedCardIds).toEqual([]);
     expect(day2.groups[day1.cardIds[0]]).toBe('newest');
+  });
+
+  it('rebuilds today after the sheet url changes', async () => {
+    const db = freshDb();
+    await applySnapshot(db, { corrections: await makeCorrections(40), duplicates: [], skippedRows: 0 });
+    const now = new Date(2026, 10, 20, 9);
+    const first = (await getOrCreateSession(db, now))!;
+    await rateCard(db, first.date, first.cardIds[0], 'easy', now);
+    await forgetTodaySession(db, now);
+    await applySnapshot(db, { corrections: await makeCorrections(10, 500), duplicates: [], skippedRows: 0 });
+    const rebuilt = (await getOrCreateSession(db, now))!;
+    expect(rebuilt.cardIds).not.toEqual(first.cardIds);
+    expect(rebuilt.completedCardIds).toEqual([]);
+    expect(await db.reviewStates.get(first.cardIds[0])).toMatchObject({ lastRating: 'easy' });
   });
 
   it('does not persist an empty session', async () => {

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { db } from '../data/db';
 import { getSheetUrl, setSheetUrl } from '../data/settings';
+import { forgetTodaySession } from '../services/session';
 import {
   buildExport,
   ImportValidationError,
@@ -45,9 +46,11 @@ export function Settings({ sync, online, onBack }: Props) {
     setSheetError(undefined);
     setSheetNote(undefined);
     try {
+      const previous = (await getSheetUrl(db)) ?? '';
       const next = validateSheetUrl(raw);
       await setSheetUrl(db, next);
       setSheetDraft(next);
+      if (previous !== next) await forgetTodaySession(db);
       await sync.syncNow();
       setSheetNote(next ? 'Saved in this browser.' : 'Cleared. Sample cards are in use.');
     } catch (err) {

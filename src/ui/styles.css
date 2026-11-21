@@ -36,8 +36,9 @@ body {
   min-height: 100dvh;
   padding: env(safe-area-inset-top) 16px calc(24px + env(safe-area-inset-bottom));
 }
-.topbar { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
-.topbar h1 { font-size: 1.25rem; margin: 0; flex: 1; }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 12px 0; flex-wrap: wrap; }
+.topbar h1 { font-size: 1.25rem; margin: 0; flex: 1 1 auto; min-width: 0; }
+.topbar .pill, .topbar .link { flex: 0 0 auto; }
 h2, h3, h4 { margin: 0 0 8px; }
 .stack { display: flex; flex-direction: column; gap: 14px; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; }

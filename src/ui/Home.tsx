@@ -20,7 +20,8 @@ export function Home({ sync, onStart }: Props) {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [s, n] = await Promise.all([peekSession(db), db.corrections.count()]);
+      const [s, rows] = await Promise.all([peekSession(db), db.corrections.toArray()]);
+      const n = rows.filter((c) => !c.removedFromSource).length;
       if (!cancelled) {
         setSession(s);
         setCardTotal(n);
