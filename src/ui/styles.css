@@ -87,6 +87,10 @@ kbd {
   opacity: 0.7;
 }
 @media (pointer: coarse) { kbd { display: none; } }
+.timer { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0; }
+.timer .label { margin: 0; }
+.timer-value { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.25rem; }
+.center .timer { justify-content: center; }
 .review-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .review-head h2 { margin: 0; }
 .badge { font-size: 0.75rem; padding: 2px 10px; border-radius: 999px; color: #fff; }

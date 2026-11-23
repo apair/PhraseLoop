@@ -42,6 +42,10 @@ export interface DailySession {
   completedCardIds: string[];
   currentIndex: number;
   createdAt: string;
+  /** Closed active-review time for this day, in milliseconds. */
+  elapsedMs?: number;
+  /** Start of the open interval. Absent while the review is paused or finished. */
+  timerStartedAt?: string;
 }
 
 export interface SettingRecord {

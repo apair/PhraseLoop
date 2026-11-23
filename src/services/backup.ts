@@ -133,6 +133,8 @@ export async function validateBackup(text: string): Promise<BackupFile> {
     if (!isObj(groups) || !cardIds.every((id) => GROUPS.has(groups[id] as string))) fail(`${p}.groups`, 'must map every card to a valid group');
     if (!isInt(s.currentIndex) || s.currentIndex > cardIds.length) fail(`${p}.currentIndex`, 'out of range');
     if (!isIso(s.createdAt)) fail(`${p}.createdAt`, 'invalid timestamp');
+    if (s.elapsedMs !== undefined && !isInt(s.elapsedMs)) fail(`${p}.elapsedMs`, 'must be a non-negative integer');
+    if (s.timerStartedAt !== undefined && !isIso(s.timerStartedAt)) fail(`${p}.timerStartedAt`, 'invalid timestamp');
     return s as unknown as DailySession;
   });
 

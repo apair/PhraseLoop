@@ -9,7 +9,7 @@ import {
   replaceAllData,
   validateBackup,
 } from '../src/services/backup';
-import { forgetTodaySession, getOrCreateSession, rateCard } from '../src/services/session';
+import { forgetTodaySession, getOrCreateSession, openSessionTimer, pauseSessionTimer, rateCard } from '../src/services/session';
 import { getSheetUrl, setSheetUrl } from '../src/data/settings';
 import {
   applySnapshot,
@@ -182,6 +182,25 @@ describe('session persistence', () => {
     expect(rebuilt.cardIds).not.toEqual(first.cardIds);
     expect(rebuilt.completedCardIds).toEqual([]);
     expect(await db.reviewStates.get(first.cardIds[0])).toMatchObject({ lastRating: 'easy' });
+  });
+
+  it('keeps the active review time and stops it when the last card is rated', async () => {
+    const db = freshDb();
+    await applySnapshot(db, { corrections: await makeCorrections(1), duplicates: [], skippedRows: 0 });
+    const start = new Date('2026-11-20T17:00:00.000Z');
+    const session = (await getOrCreateSession(db, start))!;
+    const opened = (await openSessionTimer(db, session.date, start))!;
+    expect(opened.timerStartedAt).toBe(start.toISOString());
+    const paused = (await pauseSessionTimer(db, session.date, new Date('2026-11-20T17:00:04.000Z')))!;
+    expect(paused.elapsedMs).toBe(4000);
+    expect(paused.timerStartedAt).toBeUndefined();
+    await openSessionTimer(db, session.date, new Date('2026-11-20T17:00:10.000Z'));
+    const finished = await rateCard(db, session.date, session.cardIds[0], 'easy', new Date('2026-11-20T17:00:12.500Z'));
+    expect(finished.session.elapsedMs).toBe(6500);
+    expect(finished.session.timerStartedAt).toBeUndefined();
+    const reopened = (await openSessionTimer(db, session.date, new Date('2026-11-20T18:00:00.000Z')))!;
+    expect(reopened.elapsedMs).toBe(6500);
+    expect(reopened.timerStartedAt).toBeUndefined();
   });
 
   it('does not persist an empty session', async () => {
