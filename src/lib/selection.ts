@@ -123,6 +123,7 @@ export function buildDailySession(input: SelectionInput): DailySession {
     completedCardIds: [],
     currentIndex: 0,
     createdAt: (input.now ?? new Date()).toISOString(),
+    elapsedMs: 0,
   };
 }
 

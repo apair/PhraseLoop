@@ -1,0 +1,73 @@
+Date,Original,Native alternatives,Corrected sentence,Explanation
+"2026-11-20","I am agree with this idea.","I agree with this idea.
+That sounds natural.","I agree with this idea.","""Agree"" is a verb, so do not use ""am""."
+"2026-11-20","She suggested me to wait.","She suggested that I wait.
+That sounds natural.","She suggested that I wait.","Suggest takes a that-clause or a gerund, not ""suggest someone to""."
+"2026-11-19","I have 25 years.","I am 25 years old.
+That sounds natural.","I am 25 years old.","Age uses ""be ... years old"", not ""have years""."
+"2026-11-19","He explained me the problem.","He explained the problem to me.
+That sounds natural.","He explained the problem to me.","""Explain"" needs ""to"" before the person."
+"2026-11-18","I am boring in this class.","I am bored in this class.
+That sounds natural.","I am bored in this class.","""Bored"" is how you feel; ""boring"" describes the thing."
+"2026-11-18","We discussed about the plan.","We discussed the plan.
+That sounds natural.","We discussed the plan.","""Discuss"" does not take ""about""."
+"2026-11-17","I look forward to see you.","I look forward to seeing you.
+That sounds natural.","I look forward to seeing you.","After ""look forward to"", use the -ing form."
+"2026-11-17","She said me the truth.","She told me the truth.
+That sounds natural.","She told me the truth.","Use ""tell"" with a person. ""Say"" needs no person, or ""say to""."
+"2026-11-16","I am agree to help.","I agree to help.
+That sounds natural.","I agree to help.","Drop ""am"" before the verb ""agree""."
+"2026-11-16","This is more better.","This is better.
+That sounds natural.","This is better.","""Better"" is already comparative. Do not add ""more""."
+"2026-11-15","I have visited Paris last year.","I visited Paris last year.
+That sounds natural.","I visited Paris last year.","A finished time (""last year"") takes the simple past, not the present perfect."
+"2026-11-15","He is married with a doctor.","He is married to a doctor.
+That sounds natural.","He is married to a doctor.","The preposition is ""married to""."
+"2026-11-14","I am used to wake up early.","I am used to waking up early.
+That sounds natural.","I am used to waking up early.","""Be used to"" is followed by the -ing form."
+"2026-11-14","Please explain me why.","Please explain to me why.
+That sounds natural.","Please explain to me why.","Put ""to"" before the person with ""explain""."
+"2026-11-13","She entered to the room.","She entered the room.
+That sounds natural.","She entered the room.","""Enter"" takes a direct object. No ""to""."
+"2026-11-13","I very like this song.","I really like this song.
+That sounds natural.","I really like this song.","Use ""really"" or ""very much"", not ""very"", before a verb."
+"2026-11-12","We arrived to the station.","We arrived at the station.
+That sounds natural.","We arrived at the station.","""Arrive"" uses ""at"" or ""in"", not ""to""."
+"2026-11-12","I am interesting in history.","I am interested in history.
+That sounds natural.","I am interested in history.","""Interested"" is how you feel; ""interesting"" describes the topic."
+"2026-11-11","He asked that I can help.","He asked if I could help.
+That sounds natural.","He asked if I could help.","Use ""ask if"" for a yes/no request, and backshift ""can"" to ""could""."
+"2026-11-11","I have a good news.","I have good news.
+That sounds natural.","I have good news.","""News"" is uncountable. No ""a""."
+"2026-11-10","Depends of the weather.","It depends on the weather.
+That sounds natural.","It depends on the weather.","The phrase is ""depend on"", and the sentence needs a subject."
+"2026-11-10","I am agree with both options.","I agree with both options.
+That sounds natural.","I agree with both options.","""Agree"" does not take ""am""."
+"2026-11-09","She recommended me this book.","She recommended this book to me.
+That sounds natural.","She recommended this book to me.","""Recommend"" does not take a person as a direct object."
+"2026-11-09","I did a mistake.","I made a mistake.
+That sounds natural.","I made a mistake.","The collocation is ""make a mistake""."
+"2026-11-08","Open the light, please.","Turn on the light, please.
+That sounds natural.","Turn on the light, please.","Lights are ""turned on"", not ""opened""."
+"2026-11-08","I am living here since 2019.","I have been living here since 2019.
+That sounds natural.","I have been living here since 2019.","""Since"" a starting point needs the present perfect."
+"2026-11-07","He said that he is agree.","He said that he agrees.
+That sounds natural.","He said that he agrees.","Use the verb ""agree"", not ""is agree""."
+"2026-11-07","I have few money left.","I have little money left.
+That sounds natural.","I have little money left.","""Money"" is uncountable, so use ""little"", not ""few""."
+"2026-11-06","We should to leave now.","We should leave now.
+That sounds natural.","We should leave now.","Modal verbs are followed by the base form, without ""to""."
+"2026-11-06","The people is friendly.","The people are friendly.
+That sounds natural.","The people are friendly.","""People"" takes a plural verb."
+"2026-11-05","I forgot my keys at home.","I left my keys at home.
+That sounds natural.","I left my keys at home.","Use ""leave"" for something that stayed in a place. ""Forget"" is not followed by a place."
+"2026-11-05","She insisted to pay.","She insisted on paying.
+That sounds natural.","She insisted on paying.","""Insist on"" is followed by the -ing form."
+"2026-11-04","I am agree that we start.","I agree that we should start.
+That sounds natural.","I agree that we should start.","Use ""agree that"", not ""am agree""."
+"2026-11-04","It is depend on you.","It depends on you.
+That sounds natural.","It depends on you.","""Depend"" is a verb. Do not add ""is""."
+"2026-11-03","I look to improve my writing.","I want to improve my writing.
+That sounds natural.","I want to improve my writing.","""Look to"" is not the usual way to say a goal here. ""Want to"" is clear."
+"2026-11-03","Thanks for your helping.","Thanks for your help.
+That sounds natural.","Thanks for your help.","Use the noun ""help"", or ""thanks for helping""."

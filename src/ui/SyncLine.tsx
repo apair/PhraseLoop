@@ -1,12 +1,14 @@
 import type { SyncController } from './hooks';
-import { configError } from './hooks';
 
 export function SyncLine({ sync }: { sync: SyncController }) {
-  const cfg = configError();
   const { status } = sync;
-  if (cfg) return <p className="error" role="alert">{cfg}</p>;
   return (
     <div className="muted" aria-live="polite">
+      {sync.sample && (
+        <p className="notice">
+          Sample cards. These are practice corrections, not your Google Sheet.
+        </p>
+      )}
       {sync.syncing && <p>Syncing...</p>}
       {status.lastSuccessAt ? (
         <p>

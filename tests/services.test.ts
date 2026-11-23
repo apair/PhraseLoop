@@ -9,8 +9,17 @@ import {
   replaceAllData,
   validateBackup,
 } from '../src/services/backup';
-import { getOrCreateSession, rateCard } from '../src/services/session';
-import { applySnapshot, syncCorrections } from '../src/services/sync';
+import { forgetTodaySession, getOrCreateSession, openSessionTimer, pauseSessionTimer, rateCard } from '../src/services/session';
+import { getSheetUrl, setSheetUrl } from '../src/data/settings';
+import {
+  applySnapshot,
+  resolveActiveFeed,
+  resolveFeedUrl,
+  SAMPLE_FEED_PATH,
+  SheetUrlError,
+  syncCorrections,
+  validateSheetUrl,
+} from '../src/services/sync';
 import { freshDb, makeCorrections } from './helpers';
 
 const HEADER = 'Date,Original,Alternatives,Corrected,Explanation';
@@ -45,6 +54,49 @@ describe('csv ingestion', () => {
     expect(normalizeForId('  Caf\u0065\u0301  Au  Lait ')).toBe('caf\u00e9 au lait');
     expect(await correctionId('Hello  World')).toBe(await correctionId(' hello world '));
     expect(await correctionId('Hello World.')).not.toBe(await correctionId('Hello World'));
+  });
+});
+
+describe('feed url', () => {
+  it('uses the bundled sample sheet when the URL is missing or still the placeholder', () => {
+    expect(resolveFeedUrl(undefined)).toEqual({ url: SAMPLE_FEED_PATH, sample: true });
+    expect(resolveFeedUrl('  ')).toEqual({ url: SAMPLE_FEED_PATH, sample: true });
+    expect(resolveFeedUrl('https://example.com/published-sheet.csv')).toEqual({ url: SAMPLE_FEED_PATH, sample: true });
+  });
+
+  it('uses a configured sheet URL as-is', () => {
+    const url = 'https://docs.google.com/spreadsheets/d/abc/export?format=csv&gid=0';
+    expect(resolveFeedUrl(`  ${url}  `)).toEqual({ url, sample: false });
+  });
+
+  it('saves a sheet url on this device and syncs that feed', async () => {
+    const db = freshDb();
+    expect(await resolveActiveFeed(db)).toEqual({ url: SAMPLE_FEED_PATH, sample: true });
+    expect(validateSheetUrl('  ')).toBe('');
+    expect(validateSheetUrl('https://example.com/published-sheet.csv')).toBe('');
+    expect(() => validateSheetUrl('not a url')).toThrow(SheetUrlError);
+    expect(() => validateSheetUrl('http://sheets.example/file.csv')).toThrow(/https/);
+    expect(() => validateSheetUrl('javascript:alert(1)')).toThrow(SheetUrlError);
+    expect(() => validateSheetUrl('https://user:secret@docs.google.com/spreadsheets/d/abc/edit')).toThrow(/password/);
+    expect(validateSheetUrl('http://127.0.0.1:8787/sheet.csv')).toBe('http://127.0.0.1:8787/sheet.csv');
+
+    const saved = validateSheetUrl('https://docs.google.com/spreadsheets/d/abc_123-XY/edit#gid=123');
+    expect(saved).toBe('https://docs.google.com/spreadsheets/d/abc_123-XY/export?format=csv&gid=123');
+    await setSheetUrl(db, saved);
+    expect(await getSheetUrl(db)).toBe(saved);
+    expect(await resolveActiveFeed(db)).toEqual({ url: saved, sample: false });
+
+    let requested = '';
+    const fetchImpl = (async (input: RequestInfo | URL) => {
+      requested = String(input);
+      return new Response(csv([['', 'o', 'a', 'From the sheet.', 'e']]));
+    }) as unknown as typeof fetch;
+    await syncCorrections(db, fetchImpl);
+    expect(requested).toBe(saved);
+
+    await setSheetUrl(db, '');
+    expect(await getSheetUrl(db)).toBeUndefined();
+    expect(await resolveActiveFeed(db)).toEqual({ url: SAMPLE_FEED_PATH, sample: true });
   });
 });
 
@@ -116,6 +168,39 @@ describe('session persistence', () => {
     expect(day2.date).toBe(toLocalDate(new Date(2026, 10, 21)));
     expect(day2.completedCardIds).toEqual([]);
     expect(day2.groups[day1.cardIds[0]]).toBe('newest');
+  });
+
+  it('rebuilds today after the sheet url changes', async () => {
+    const db = freshDb();
+    await applySnapshot(db, { corrections: await makeCorrections(40), duplicates: [], skippedRows: 0 });
+    const now = new Date(2026, 10, 20, 9);
+    const first = (await getOrCreateSession(db, now))!;
+    await rateCard(db, first.date, first.cardIds[0], 'easy', now);
+    await forgetTodaySession(db, now);
+    await applySnapshot(db, { corrections: await makeCorrections(10, 500), duplicates: [], skippedRows: 0 });
+    const rebuilt = (await getOrCreateSession(db, now))!;
+    expect(rebuilt.cardIds).not.toEqual(first.cardIds);
+    expect(rebuilt.completedCardIds).toEqual([]);
+    expect(await db.reviewStates.get(first.cardIds[0])).toMatchObject({ lastRating: 'easy' });
+  });
+
+  it('keeps the active review time and stops it when the last card is rated', async () => {
+    const db = freshDb();
+    await applySnapshot(db, { corrections: await makeCorrections(1), duplicates: [], skippedRows: 0 });
+    const start = new Date('2026-11-20T17:00:00.000Z');
+    const session = (await getOrCreateSession(db, start))!;
+    const opened = (await openSessionTimer(db, session.date, start))!;
+    expect(opened.timerStartedAt).toBe(start.toISOString());
+    const paused = (await pauseSessionTimer(db, session.date, new Date('2026-11-20T17:00:04.000Z')))!;
+    expect(paused.elapsedMs).toBe(4000);
+    expect(paused.timerStartedAt).toBeUndefined();
+    await openSessionTimer(db, session.date, new Date('2026-11-20T17:00:10.000Z'));
+    const finished = await rateCard(db, session.date, session.cardIds[0], 'easy', new Date('2026-11-20T17:00:12.500Z'));
+    expect(finished.session.elapsedMs).toBe(6500);
+    expect(finished.session.timerStartedAt).toBeUndefined();
+    const reopened = (await openSessionTimer(db, session.date, new Date('2026-11-20T18:00:00.000Z')))!;
+    expect(reopened.elapsedMs).toBe(6500);
+    expect(reopened.timerStartedAt).toBeUndefined();
   });
 
   it('does not persist an empty session', async () => {

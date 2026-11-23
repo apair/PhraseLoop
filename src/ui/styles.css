@@ -36,8 +36,9 @@ body {
   min-height: 100dvh;
   padding: env(safe-area-inset-top) 16px calc(24px + env(safe-area-inset-bottom));
 }
-.topbar { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
-.topbar h1 { font-size: 1.25rem; margin: 0; flex: 1; }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 12px 0; flex-wrap: wrap; }
+.topbar h1 { font-size: 1.25rem; margin: 0; flex: 1 1 auto; min-width: 0; }
+.topbar .pill, .topbar .link { flex: 0 0 auto; }
 h2, h3, h4 { margin: 0 0 8px; }
 .stack { display: flex; flex-direction: column; gap: 14px; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -56,6 +57,7 @@ h2, h3, h4 { margin: 0 0 8px; }
 .big { font-size: 2rem; font-weight: 700; margin: 0; }
 .big .muted { font-size: 1rem; font-weight: 400; }
 .error { color: var(--again); margin: 4px 0; }
+.notice { color: var(--hard); margin: 4px 0; }
 .ok { color: var(--easy); margin: 4px 0; }
 .pill { font-size: 0.75rem; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--border); }
 .pill-ok { color: var(--easy); }
@@ -85,6 +87,10 @@ kbd {
   opacity: 0.7;
 }
 @media (pointer: coarse) { kbd { display: none; } }
+.timer { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0; }
+.timer .label { margin: 0; }
+.timer-value { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.25rem; }
+.center .timer { justify-content: center; }
 .review-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .review-head h2 { margin: 0; }
 .badge { font-size: 0.75rem; padding: 2px 10px; border-radius: 999px; color: #fff; }
@@ -106,6 +112,18 @@ summary { cursor: pointer; font-weight: 600; min-height: 32px; }
 .rate-again { background: var(--again); }
 .rate-hard { background: var(--hard); }
 .rate-easy { background: var(--easy); }
+.field { display: flex; flex-direction: column; gap: 6px; font-weight: 600; }
+.field input {
+  width: 100%;
+  font: inherit;
+  font-weight: 400;
+  min-height: 48px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+}
 .file { display: block; }
 .file input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .file span { display: block; text-align: center; line-height: 28px; }

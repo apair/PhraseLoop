@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { db } from '../data/db';
-import { getOrCreateSession, rateCard } from '../services/session';
+import { isSessionComplete } from '../lib/timer';
+import { getOrCreateSession, openSessionTimer, pauseSessionTimer, rateCard } from '../services/session';
 import type { Correction, DailySession, Group, Rating } from '../types';
+import { SessionClock } from './SessionClock';
 
 const GROUP_LABEL: Record<Group, string> = { newest: 'Newest', difficult: 'Difficult', older: 'Older' };
 
@@ -22,8 +24,13 @@ export function Review({ onExit }: { onExit: () => void }) {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const s = await getOrCreateSession(db);
+      const created = await getOrCreateSession(db);
       if (cancelled) return;
+      const s = created ? await openSessionTimer(db, created.date) : undefined;
+      if (cancelled) {
+        if (s && !isSessionComplete(s)) await pauseSessionTimer(db, s.date);
+        return;
+      }
       if (s) {
         const list = await db.corrections.bulkGet(s.cardIds);
         if (cancelled) return;
@@ -36,6 +43,27 @@ export function Review({ onExit }: { onExit: () => void }) {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!session || isSessionComplete(session)) return;
+    const date = session.date;
+    const onVisibility = () => {
+      const next = document.visibilityState === 'hidden' ? pauseSessionTimer(db, date) : openSessionTimer(db, date);
+      void next.then((updated) => {
+        if (updated) setSession(updated);
+      });
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      void pauseSessionTimer(db, date);
+    };
+  }, [session?.date, session && isSessionComplete(session)]);
+
+  const leave = async () => {
+    if (session && !isSessionComplete(session)) await pauseSessionTimer(db, session.date);
+    onExit();
+  };
 
   const total = session?.cardIds.length ?? 0;
   const index = session?.currentIndex ?? 0;
@@ -91,7 +119,7 @@ export function Review({ onExit }: { onExit: () => void }) {
     return (
       <div className="card">
         <p>No cards available yet. Sync once while online.</p>
-        <button onClick={onExit}>Back</button>
+        <button onClick={() => void leave()}>Back</button>
       </div>
     );
   }
@@ -104,7 +132,8 @@ export function Review({ onExit }: { onExit: () => void }) {
           You reviewed {session.completedCardIds.length} cards today ({groupCounts.newest} newest,{' '}
           {groupCounts.difficult} difficult, {groupCounts.older} older).
         </p>
-        <button className="primary" onClick={onExit}>Back to home</button>
+        <SessionClock session={session} />
+        <button className="primary" onClick={() => void leave()}>Back to home</button>
       </div>
     );
   }
@@ -121,12 +150,13 @@ export function Review({ onExit }: { onExit: () => void }) {
   return (
     <section className="stack">
       <div className="review-head">
-        <button className="link" onClick={onExit}>Exit</button>
+        <button className="link" onClick={() => void leave()}>Exit</button>
         <span aria-live="polite">
           Card {index + 1} of {total}
         </span>
         <span className={`badge badge-${session.groups[card.id]}`}>{GROUP_LABEL[session.groups[card.id]]}</span>
       </div>
+      <SessionClock session={session} />
       <progress value={session.completedCardIds.length} max={total} aria-label="Session progress" />
 
       <article className="card flash" aria-label="Flashcard">

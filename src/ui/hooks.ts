@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { db } from '../data/db';
 import { getSyncStatus } from '../data/settings';
-import { syncCorrections, ConfigError, getFeedUrl, type SyncSummary } from '../services/sync';
+import { resolveActiveFeed, syncCorrections, type SyncSummary } from '../services/sync';
 import type { SyncStatus } from '../types';
 
 export function useOnline(): boolean {
@@ -19,18 +19,11 @@ export function useOnline(): boolean {
   return online;
 }
 
-export function configError(): string | undefined {
-  try {
-    getFeedUrl();
-    return undefined;
-  } catch (err) {
-    return err instanceof ConfigError ? err.message : String(err);
-  }
-}
-
 export interface SyncController {
   status: SyncStatus;
   syncing: boolean;
+  /** True while the active feed is the bundled sample sheet. */
+  sample: boolean;
   lastSummary?: SyncSummary;
   /** Bumps after every successful sync so screens can reload. */
   version: number;
@@ -40,16 +33,20 @@ export interface SyncController {
 export function useSync(online: boolean): SyncController {
   const [status, setStatus] = useState<SyncStatus>({});
   const [syncing, setSyncing] = useState(false);
+  const [sample, setSample] = useState(true);
   const [lastSummary, setLastSummary] = useState<SyncSummary>();
   const [version, setVersion] = useState(0);
 
   const syncNow = useCallback(async () => {
     setSyncing(true);
     try {
-      setLastSummary(await syncCorrections(db));
+      const feed = await resolveActiveFeed(db);
+      setSample(feed.sample);
+      setLastSummary(await syncCorrections(db, fetch, feed.url));
       setVersion((v) => v + 1);
     } catch {
       // The error is persisted in sync status and shown by the UI.
+      setSample((await resolveActiveFeed(db)).sample);
     } finally {
       setStatus(await getSyncStatus(db));
       setSyncing(false);
@@ -61,8 +58,8 @@ export function useSync(online: boolean): SyncController {
   }, []);
 
   useEffect(() => {
-    if (online && !configError()) void syncNow();
+    if (online) void syncNow();
   }, [online, syncNow]);
 
-  return { status, syncing, lastSummary, version, syncNow };
+  return { status, syncing, sample, lastSummary, version, syncNow };
 }

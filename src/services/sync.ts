@@ -1,17 +1,60 @@
 import type { Db } from '../data/db';
-import { updateSyncStatus } from '../data/settings';
+import { getSheetUrl, updateSyncStatus } from '../data/settings';
 import { parseSheetCsv, type ParseResult } from '../lib/csv';
 
-export class ConfigError extends Error {}
+/** Same-origin CSV shipped in public/. Used when no real sheet URL is configured. */
+export const SAMPLE_FEED_PATH = '/sample-sheet.csv';
 
-export function getFeedUrl(): string {
-  const url = (import.meta.env.VITE_GOOGLE_SHEET_URL as string | undefined)?.trim();
-  if (!url || url === 'https://example.com/published-sheet.csv') {
-    throw new ConfigError(
-      'No sheet feed is configured. Set VITE_GOOGLE_SHEET_URL (see .env.example) and rebuild the app.',
-    );
+const PLACEHOLDER_FEED = 'https://example.com/published-sheet.csv';
+
+/**
+ * A configured sheet URL wins. An empty value or the example placeholder
+ * falls back to the bundled sample sheet so the app still runs.
+ */
+export function resolveFeedUrl(configured: string | undefined): { url: string; sample: boolean } {
+  const url = configured?.trim() ?? '';
+  if (!url || url === PLACEHOLDER_FEED) return { url: SAMPLE_FEED_PATH, sample: true };
+  return { url, sample: false };
+}
+
+export class SheetUrlError extends Error {}
+
+/**
+ * Empty clears the saved feed. An edit link to a Google Sheet is rewritten to
+ * the Sheet1 CSV export. Only https, and http on localhost, are accepted.
+ */
+export function validateSheetUrl(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed === PLACEHOLDER_FEED) return '';
+  let url: URL;
+  try {
+    url = new URL(trimmed);
+  } catch {
+    throw new SheetUrlError('Enter a full URL, including https://.');
   }
-  return url;
+  const local = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+  if (url.protocol !== 'https:' && !(url.protocol === 'http:' && local)) {
+    throw new SheetUrlError('The sheet URL must start with https://.');
+  }
+  if (url.username || url.password) {
+    throw new SheetUrlError('Remove any username or password from the sheet URL.');
+  }
+  const edit = url.hostname === 'docs.google.com'
+    ? url.pathname.match(/^\/spreadsheets(?:\/u\/\d+)?\/d\/([a-zA-Z0-9-_]+)\/(?:edit|view)\/?$/)
+    : null;
+  if (edit) {
+    const hash = new URLSearchParams(url.hash.replace(/^#/, ''));
+    const gid = url.searchParams.get('gid') ?? hash.get('gid') ?? '0';
+    return `https://docs.google.com/spreadsheets/d/${edit[1]}/export?format=csv&gid=${encodeURIComponent(gid)}`;
+  }
+  return url.toString();
+}
+
+/** Saved setting wins. The build-time variable is the fallback, then the sample sheet. */
+export async function resolveActiveFeed(db: Db): Promise<{ url: string; sample: boolean }> {
+  const saved = await getSheetUrl(db);
+  if (saved) return resolveFeedUrl(saved);
+  return resolveFeedUrl(import.meta.env.VITE_GOOGLE_SHEET_URL as string | undefined);
 }
 
 export interface SyncSummary {
@@ -48,11 +91,12 @@ export async function applySnapshot(db: Db, result: ParseResult): Promise<SyncSu
 export async function syncCorrections(
   db: Db,
   fetchImpl: typeof fetch = fetch,
-  url: string = getFeedUrl(),
+  url?: string,
 ): Promise<SyncSummary> {
+  const target = url ?? (await resolveActiveFeed(db)).url;
   const attemptedAt = new Date().toISOString();
   try {
-    const response = await fetchImpl(url, { cache: 'no-store' });
+    const response = await fetchImpl(target, { cache: 'no-store' });
     if (!response.ok) {
       throw new Error(
         `The feed responded with HTTP ${response.status}. If this is 401/403 the sheet is not published for public read.`,

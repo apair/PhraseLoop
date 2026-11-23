@@ -3,6 +3,7 @@ import { db } from '../data/db';
 import { getOrCreateSession, peekSession } from '../services/session';
 import type { DailySession } from '../types';
 import type { SyncController } from './hooks';
+import { SessionClock } from './SessionClock';
 import { SyncLine } from './SyncLine';
 
 interface Props {
@@ -20,7 +21,8 @@ export function Home({ sync, onStart }: Props) {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [s, n] = await Promise.all([peekSession(db), db.corrections.count()]);
+      const [s, rows] = await Promise.all([peekSession(db), db.corrections.toArray()]);
+      const n = rows.filter((c) => !c.removedFromSource).length;
       if (!cancelled) {
         setSession(s);
         setCardTotal(n);
@@ -64,6 +66,7 @@ export function Home({ sync, onStart }: Props) {
           </p>
         )}
         {session && <progress value={done} max={total} aria-hidden="true" />}
+        {session && <SessionClock session={session} />}
         <button className="primary" onClick={start} disabled={finished || !loaded}>
           {finished ? 'All done for today' : session && done > 0 ? "Continue today's review" : "Start today's review"}
         </button>

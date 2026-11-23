@@ -23,9 +23,12 @@ echo 'VITE_GOOGLE_SHEET_URL=http://localhost:8787/sheet.csv' > .env.local
 
 ## Configuring the sheet feed
 
-The feed URL comes **only** from the build-time variable `VITE_GOOGLE_SHEET_URL` (read through
-`import.meta.env`). There is deliberately no in-app URL setting; changing it means rebuilding and
-redeploying. When it is missing, the app shows a clear configuration error and keeps working from cached data.
+Open **Settings** and paste either feed URL below, or the normal Google Sheets link (the one ending in
+`/edit`). PhraseLoop rewrites an edit link to the Sheet1 CSV export and saves it in this browser only.
+It is not part of a backup export. `VITE_GOOGLE_SHEET_URL` is still read at build time when no URL is
+saved. When both are missing, or the value is still the placeholder in `.env.example`, the app syncs the
+bundled sample sheet (`public/sample-sheet.csv`) and labels those cards as sample data. A failed sync
+never erases cards already stored on the device.
 
 Worksheet `Sheet1` (gid `0`), columns A-E (date, original, native alternatives, corrected sentence,
 explanation), headers in row 1. Two feed styles work:
@@ -34,8 +37,8 @@ explanation), headers in row 1. Two feed styles work:
 - Published sheet (File > Share > Publish to web, **Sheet1 only**, CSV): the generated `.../pub?gid=0&single=true&output=csv` URL.
 
 Both were verified from a real browser (Chrome) with CORS: the app synced all rows and started a review.
-The real URL is intentionally not committed (this repository is public); set it in your local `.env.local`
-and in your host's build environment.
+The real URL is intentionally not committed (this repository is public). Save it in Settings on each
+device, or set `VITE_GOOGLE_SHEET_URL` in `.env.local` for a local build.
 
 > Public read means anyone who has or discovers the URL can view the corrections. Link sharing exposes the
 > **whole spreadsheet** (every tab), while "Publish to web" exposes only the published tab, so prefer publishing
